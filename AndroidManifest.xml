@@ -1,0 +1,9 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="tr.olgun.suterazisi" android:versionCode="1" android:versionName="1.0">
+    <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="35"/>
+    <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false"/>
+    <application android:label="Su Terazisi" android:icon="@drawable/level" android:theme="@android:style/Theme.Material.NoActionBar" android:allowBackup="false">
+        <activity android:name=".LevelActivity" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
+        </activity>
+    </application>
+</manifest>

@@ -3,6 +3,7 @@ package tr.olgun.suterazisi;
 import android.content.Context;
 import android.graphics.*;
 import android.view.View;
+import android.widget.TextView;
 import java.util.Locale;
 
 final class Instrument extends View {
@@ -14,27 +15,33 @@ final class Instrument extends View {
         new int[]{0xff486f00,0xff85b000,0xffd0e819,0xff829800},null,Shader.TileMode.CLAMP);
     private final Shader air = new RadialGradient(-.23f,-.42f,1.43f,
         new int[]{0xffedffa6,0xffcadf3a,0xffa0bd19,0xff517000},new float[]{0,.43f,.72f,1},Shader.TileMode.CLAMP);
-    private String message = "", reading = "";
+    private final TextView angles;
+    private boolean available;
     private float x,y;
-    private int lastX = Integer.MIN_VALUE, lastY;
-    Instrument(Context context) { super(context); setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_YES); }
+    private int headerBottom, lastX = Integer.MIN_VALUE, lastY;
+    Instrument(Context context, TextView angles) {
+        super(context);
+        this.angles = angles;
+    }
+    void headerBottom(int bottom) {
+        headerBottom = bottom;
+        invalidate();
+    }
     void status(String s) {
-        message = s;
+        available = false;
         lastX = Integer.MIN_VALUE;
-        setContentDescription(s);
+        if (!s.contentEquals(angles.getText())) angles.setText(s);
         invalidate();
     }
     void measure(float x,float y) {
-        this.x=x;
-        this.y=y;
-        message="";
+        available = true;
         int ax=Math.round(10*x), ay=Math.round(10*y);
-        if(ax!=lastX || ay!=lastY) {
-            lastX=ax;
-            lastY=ay;
-            reading=String.format(Locale.forLanguageTag("tr"),"X  %.1f°     Y  %.1f°",ax/10f,ay/10f);
-            setContentDescription(reading);
-        }
+        if(ax==lastX && ay==lastY) return;
+        lastX=ax;
+        lastY=ay;
+        this.x=ax/10f;
+        this.y=ay/10f;
+        angles.setText(String.format(Locale.forLanguageTag("tr"),"X  %.1f°     Y  %.1f°",this.x,this.y));
         postInvalidateOnAnimation();
     }
     private void fill(int color) { p.setShader(null); p.setColor(color); }
@@ -59,7 +66,7 @@ final class Instrument extends View {
         fill(-1);
         p.setShader(glass);
         c.drawRoundRect(4,4,length-4,60,4,4,p);
-        if(message.isEmpty()) bubble(c,length/2+travel(value)*(length/2-32),32,23,18);
+        if(available) bubble(c,length/2+travel(value)*(length/2-32),32,23,18);
         fill(0xcc2b3907);
         p.setStrokeWidth(1.5f);
         for(int sign:new int[]{-1,1}) {
@@ -68,28 +75,38 @@ final class Instrument extends View {
             c.drawLine(marker+3*sign,3,marker+3*sign,61,p);
         }
     }
-    private float travel(float v) { return Math.max(-1,Math.min(1,v/15)); }
-    private void ring(Canvas c,float r,int color) {
-        fill(color);
-        p.setStyle(Paint.Style.STROKE);
-        p.setStrokeWidth(1.5f);
-        c.drawCircle(0,0,r,p);
-        p.setStyle(Paint.Style.FILL);
+    // More travel per degree near level; the scale continues through vertical.
+    private float travel(float degrees) {
+        double magnitude = Math.abs(degrees);
+        return (float)Math.copySign(Math.log1p(magnitude/22) / Math.log1p(180.0/22), degrees);
+    }
+    private void edge(Canvas c,float left,float top,float length,float width,boolean vertical,float degrees) {
+        c.save();
+        c.translate(left,top);
+        if(vertical) c.rotate(90);
+        float scale=width/70;
+        c.scale(scale,scale);
+        c.translate(3,3);
+        tube(c,length/scale-6,degrees);
+        c.restore();
     }
     @Override protected void onDraw(Canvas c) {
         c.drawColor(0xff181a18);
-        float scale=Math.min(getWidth()/330f,getHeight()/410f);
+        float w=getWidth(), h=getHeight();
+        float density=getResources().getDisplayMetrics().density;
+        float margin=4*density, gap=3*density;
+        float width=Math.min(28*density, Math.min(w,h)*.075f);
+        edge(c,margin,margin,w-2*margin,width,false,x);
+        edge(c,margin,h-margin-width,w-2*margin,width,false,x);
+        float top=margin+width+gap;
+        edge(c,margin+width,top,h-2*top,width,true,-y);
+        edge(c,w-margin,top,h-2*top,width,true,-y);
+        float radius=Math.min(w/2-margin-width-8*density,
+            h/2-Math.max(top,headerBottom)-8*density);
+        if(radius<=0) return;
         c.save();
-        c.translate((getWidth()-300*scale)/2,(getHeight()-380*scale)/2);
-        c.scale(scale,scale);
-        tube(c,300,x);
-        c.save();
-        c.translate(302,84);
-        c.rotate(90);
-        tube(c,294,-y);
-        c.restore();
-        c.save();
-        c.translate(108,192);
+        c.translate(w/2,h/2);
+        c.scale(radius/109,radius/109);
         fill(0xff50534a);
         c.drawCircle(0,0,109,p);
         fill(0xff0b0d0a);
@@ -97,23 +114,19 @@ final class Instrument extends View {
         fill(-1);
         p.setShader(pool);
         c.drawCircle(0,0,99,p);
-        if(message.isEmpty()) {
-            float norm=(float)Math.max(15,Math.hypot(x,y));
-            bubble(c,79*x/norm,-79*y/norm,18,18);
+        if(available) {
+            double magnitude=Math.hypot(x,y);
+            float distance=79*travel((float)Math.min(180,magnitude));
+            float factor=magnitude==0 ? 0 : (float)(distance/magnitude);
+            bubble(c,x*factor,-y*factor,18,18);
         }
         fill(0xcc293902);
         p.setStrokeWidth(1.3f);
         c.drawLine(-99,0,99,0,p);
         c.drawLine(0,-99,0,99,p);
-        ring(c,24,0xff354808);
-        c.restore();
-        rect(c,0,329,217,378,5,0xff464a41);
-        rect(c,1,330,216,377,4,0xff10130f);
-        fill(0xffe6ecda);
-        p.setTextAlign(Paint.Align.CENTER);
-        p.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL));
-        p.setTextSize(message.isEmpty()?21:15);
-        c.drawText(message.isEmpty()?reading:message,108,354-(p.ascent()+p.descent())/2,p);
+        p.setStyle(Paint.Style.STROKE);
+        c.drawCircle(0,0,24,p);
+        p.setStyle(Paint.Style.FILL);
         c.restore();
     }
 }

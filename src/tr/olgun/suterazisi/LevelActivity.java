@@ -11,7 +11,7 @@ import android.widget.*;
 public final class LevelActivity extends Activity implements SensorEventListener {
     private SensorManager manager;
     private Instrument instrument;
-    private Button calibrate;
+    private TextView title;
     private SharedPreferences settings;
     private float rawX, rawY, gx, gy, gz, zeroX, zeroY;
     private long previous;
@@ -24,8 +24,7 @@ public final class LevelActivity extends Activity implements SensorEventListener
         settings = getSharedPreferences("reference", MODE_PRIVATE);
         zeroX = settings.getFloat("x", 0);
         zeroY = settings.getFloat("y", 0);
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
+        FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(0xff181a18);
         root.setOnApplyWindowInsetsListener((v, insets) -> {
             v.setPadding(insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(),
@@ -34,24 +33,30 @@ public final class LevelActivity extends Activity implements SensorEventListener
         });
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE |
             View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
-        LinearLayout bar = new LinearLayout(this);
-        bar.setGravity(Gravity.CENTER_VERTICAL);
-        bar.setPadding(dp(18), 0, dp(8), 0);
-        TextView title = new TextView(this);
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.VERTICAL);
+        header.setGravity(Gravity.CENTER);
+        title = new TextView(this);
         title.setText("Su Terazisi");
-        title.setTextSize(20);
+        title.setTextSize(22);
         title.setTextColor(0xfff3f5ed);
-        bar.addView(title, new LinearLayout.LayoutParams(0, -2, 1));
-        calibrate = new Button(this, null, android.R.attr.borderlessButtonStyle);
-        calibrate.setText("⊕");
-        calibrate.setTextSize(29);
-        calibrate.setTextColor(0xffc4df6e);
-        calibrate.setContentDescription("Referans ayarları");
-        calibrate.setOnClickListener(v -> referenceDialog());
-        bar.addView(calibrate, dp(52), dp(48));
-        root.addView(bar, -1, -2);
-        instrument = new Instrument(this);
+        title.setGravity(Gravity.CENTER);
+        title.setMinHeight(dp(48));
+        title.setContentDescription("Su Terazisi, referans ayarları");
+        title.setOnClickListener(v -> referenceDialog());
+        header.addView(title, -1, -2);
+        TextView angles = new TextView(this);
+        angles.setTextSize(17);
+        angles.setGravity(Gravity.CENTER);
+        angles.setTextColor(0xffdeedab);
+        header.addView(angles, -1, -2);
+        instrument = new Instrument(this, angles);
         root.addView(instrument, -1, -1);
+        FrameLayout.LayoutParams headerParams = new FrameLayout.LayoutParams(-1, -2, Gravity.TOP);
+        headerParams.setMargins(dp(40), dp(38), dp(40), 0);
+        root.addView(header, headerParams);
+        header.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) ->
+            instrument.headerBottom(b - root.getPaddingTop()));
         setContentView(root);
     }
 
@@ -71,7 +76,7 @@ public final class LevelActivity extends Activity implements SensorEventListener
     @Override protected void onResume() {
         super.onResume();
         previous = 0;
-        calibrate.setEnabled(false);
+        title.setEnabled(false);
         boolean listening = false;
         for (int type : new int[]{Sensor.TYPE_GRAVITY, Sensor.TYPE_ACCELEROMETER}) {
             Sensor sensor = manager.getDefaultSensor(type);
@@ -92,17 +97,17 @@ public final class LevelActivity extends Activity implements SensorEventListener
         gz += gain * (event.values[2] - gz);
         double length = Math.sqrt(gx*gx + gy*gy + gz*gz);
         if (length < 1) {
-            calibrate.setEnabled(false);
+            title.setEnabled(false);
             instrument.status("Telefonu sabit tutun");
             return;
         }
         rawX = (float)Math.toDegrees(Math.atan2(gx, Math.hypot(gy, gz)));
-        rawY = (float)Math.toDegrees(Math.atan2(gy, Math.hypot(gx, gz)));
-        calibrate.setEnabled(true);
+        rawY = (float)Math.toDegrees(Math.atan2(gy, gz));
+        title.setEnabled(true);
         displayAngles();
     }
     private void displayAngles() {
-        float x = rawX-zeroX, y = rawY-zeroY;
+        float x = rawX-zeroX, y = (rawY-zeroY+540f)%360f-180f;
         switch (getWindowManager().getDefaultDisplay().getRotation()) {
             case Surface.ROTATION_90: instrument.measure(-y, x); break;
             case Surface.ROTATION_180: instrument.measure(-x, -y); break;

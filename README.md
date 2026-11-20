@@ -1,5 +1,7 @@
 # Su Terazisi
 
-Telefonu ölçülecek yüzeye yerleştirin. Yatay ve dikey tüpler ilgili eksenin eğimini, dairesel gösterge iki eksenin birleşik eğimini gösterir. Kabarcık yüzeyin yüksek tarafına hareket eder. X ve Y açıları derece cinsindendir.
+[Su-Terazisi.apk indir](https://raw.githubusercontent.com/muhammedyusufolgun/Su-Terazisi/main/Su-Terazisi.apk)
 
-Hedef düğmesiyle mevcut yüzeyi sıfır olarak kaydedebilir veya fabrika referansına dönebilirsiniz. Uygulama çevrimdışı çalışır.
+Telefonu ekranı yukarı bakacak şekilde yüzeye koyun. Üst ve alt tüpler sağ-sol eğimini (X), iki yan tüp öne-arkaya eğimi (Y) gösterir. Ortadaki dairesel gösterge iki ekseni birlikte izler. X ve Y sıfır olduğunda beş kabarcık da ortalanır. Ekran dikey kalır.
+
+Farklı bir konumu referans almak için başlığa dokunun ve **Sıfırla** seçeneğini kullanın. **Varsayılana dön** yatay referansı geri getirir. Uygulama çevrimdışı çalışır.

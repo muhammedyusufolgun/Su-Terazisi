@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="tr.olgun.suterazisi" android:versionCode="3" android:versionName="1.2">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="tr.olgun.suterazisi" android:versionCode="4" android:versionName="1.3">
     <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="35"/>
     <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false"/>
     <application android:label="Su Terazisi" android:icon="@drawable/level" android:theme="@android:style/Theme.Material.NoActionBar" android:allowBackup="false">

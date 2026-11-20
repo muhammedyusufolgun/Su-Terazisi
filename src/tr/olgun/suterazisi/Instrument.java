@@ -18,8 +18,8 @@ final class Instrument extends View {
     private final TextView angles;
     private boolean available;
     private float x,y;
-    private int footerTop = Integer.MAX_VALUE;
-    private int headerBottom, lastX = Integer.MIN_VALUE, lastY;
+    private float radius, sideWidth;
+    private int lastX = Integer.MIN_VALUE, lastY;
     Instrument(Context context, TextView angles) {
         super(context);
         this.angles = angles;
@@ -28,13 +28,21 @@ final class Instrument extends View {
         float shorter = Math.min(getWidth(), getHeight());
         return 4 * Math.min(28 * getResources().getDisplayMetrics().density, shorter * .075f);
     }
-    void footerTop(int top) {
-        footerTop = top;
+    float sideWidth() { return sideWidth; }
+    float fitCenter(int labelHeight) {
+        android.util.DisplayMetrics dm=getResources().getDisplayMetrics();
+        float margin=4*dm.density;
+        float half=getWidth()/2f-margin;
+        float oldChannel=half-edgeWidth();
+        float previousRadius=oldChannel-Math.min(dm.xdpi/2.54f, Math.max(0,oldChannel-24*dm.density));
+        float gap=dm.xdpi/5.08f;
+        float minSide=Math.min(edgeWidth()*2/3,16*dm.density);
+        float maxRadius=Math.min(half-gap-minSide,
+            getHeight()/2f-margin-edgeWidth()*2/3-labelHeight-6*dm.density);
+        radius=Math.max(0,Math.min(3*previousRadius,maxRadius));
+        sideWidth=Math.max(minSide,half-gap-radius);
         invalidate();
-    }
-    void headerBottom(int bottom) {
-        headerBottom = bottom;
-        invalidate();
+        return radius;
     }
     void status(String s) {
         available = false;
@@ -103,19 +111,19 @@ final class Instrument extends View {
         c.drawColor(0xff181a18);
         float w=getWidth(), h=getHeight();
         float density=getResources().getDisplayMetrics().density;
-        float margin=4*density, width=edgeWidth();
+        float margin=4*density, width=edgeWidth()*2/3;
         if (width <= 0) return;
         android.util.DisplayMetrics metrics=getResources().getDisplayMetrics();
-        float gap=Math.min(metrics.ydpi/2.54f, Math.max(0,(h-2*(margin+width)-width)/2));
+        float gap=Math.min(metrics.ydpi/2.54f, Math.max(0,(h-2*(margin+edgeWidth())-edgeWidth())/2));
         edge(c,margin,margin,w-2*margin,width,false,x);
         edge(c,margin,h-margin-width,w-2*margin,width,false,x);
-        float top=margin+width+gap;
-        edge(c,margin+width,top,h-2*top,width,true,-y);
-        edge(c,w-margin,top,h-2*top,width,true,-y);
-        float halfChannel=w/2-margin-width;
-        float sideGap=Math.min(metrics.xdpi/2.54f, Math.max(0,halfChannel-24*density));
-        float radius=Math.min(halfChannel-sideGap,
-            Math.min(h/2-headerBottom,footerTop-h/2)-6*density);
+        float top=margin+edgeWidth()+gap;
+        float sideLength=(h-2*top)*2/3;
+        float sideTop=(h-sideLength)/2;
+        if(sideWidth>0 && sideLength>0) {
+            edge(c,margin+sideWidth,sideTop,sideLength,sideWidth,true,-y);
+            edge(c,w-margin,sideTop,sideLength,sideWidth,true,-y);
+        }
         if(radius<=0) return;
         c.save();
         c.translate(w/2,h/2);

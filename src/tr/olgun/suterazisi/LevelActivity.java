@@ -55,8 +55,6 @@ public final class LevelActivity extends Activity implements SensorEventListener
         FrameLayout.LayoutParams headerParams = new FrameLayout.LayoutParams(-1, -2, Gravity.TOP);
 
         root.addView(header, headerParams);
-        header.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) ->
-            instrument.headerBottom(b - root.getPaddingTop()));
         TextView signature = new TextView(this);
         signature.setText("Muhammed Yusuf OLGUN");
         signature.setGravity(Gravity.CENTER);
@@ -66,19 +64,22 @@ public final class LevelActivity extends Activity implements SensorEventListener
         FrameLayout.LayoutParams footerParams = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM);
         root.addView(signature, footerParams);
         instrument.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) -> {
-            int edge = Math.round(instrument.edgeWidth()) + dp(4);
-            int inset = edge + dp(3);
-            headerParams.setMargins(inset, edge + dp(3), inset, 0);
+            int edge = Math.round(instrument.edgeWidth()*2/3) + dp(4);
+            int labelHeight = title.getMinHeight() + angles.getLineHeight() + dp(8);
+            float radius = instrument.fitCenter(labelHeight);
+            int inset = Math.round(instrument.sideWidth()) + dp(7);
+            int bandHeight = Math.max(1, Math.round((b-t)/2f-radius)-edge);
+            headerParams.height = bandHeight;
+            headerParams.setMargins(inset, edge, inset, 0);
             header.setLayoutParams(headerParams);
             float space = Math.max(1, r-l-2*inset);
             signature.setTextScaleX(1);
             float textWidth = signature.getPaint().measureText(signature.getText().toString());
             signature.setTextScaleX(Math.min(1, space/textWidth));
-            footerParams.setMargins(inset, 0, inset, edge + 2*signature.getLineHeight());
+            footerParams.height = bandHeight;
+            footerParams.setMargins(inset, 0, inset, edge);
             signature.setLayoutParams(footerParams);
         });
-        signature.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) ->
-            instrument.footerTop(t - root.getPaddingTop()));
         setContentView(root);
     }
 

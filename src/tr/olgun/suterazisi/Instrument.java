@@ -18,10 +18,19 @@ final class Instrument extends View {
     private final TextView angles;
     private boolean available;
     private float x,y;
+    private int footerTop = Integer.MAX_VALUE;
     private int headerBottom, lastX = Integer.MIN_VALUE, lastY;
     Instrument(Context context, TextView angles) {
         super(context);
         this.angles = angles;
+    }
+    float edgeWidth() {
+        float shorter = Math.min(getWidth(), getHeight());
+        return 4 * Math.min(28 * getResources().getDisplayMetrics().density, shorter * .075f);
+    }
+    void footerTop(int top) {
+        footerTop = top;
+        invalidate();
     }
     void headerBottom(int bottom) {
         headerBottom = bottom;
@@ -94,15 +103,19 @@ final class Instrument extends View {
         c.drawColor(0xff181a18);
         float w=getWidth(), h=getHeight();
         float density=getResources().getDisplayMetrics().density;
-        float margin=4*density, gap=3*density;
-        float width=Math.min(28*density, Math.min(w,h)*.075f);
+        float margin=4*density, width=edgeWidth();
+        if (width <= 0) return;
+        android.util.DisplayMetrics metrics=getResources().getDisplayMetrics();
+        float gap=Math.min(metrics.ydpi/2.54f, Math.max(0,(h-2*(margin+width)-width)/2));
         edge(c,margin,margin,w-2*margin,width,false,x);
         edge(c,margin,h-margin-width,w-2*margin,width,false,x);
         float top=margin+width+gap;
         edge(c,margin+width,top,h-2*top,width,true,-y);
         edge(c,w-margin,top,h-2*top,width,true,-y);
-        float radius=Math.min(w/2-margin-width-8*density,
-            h/2-Math.max(top,headerBottom)-8*density);
+        float halfChannel=w/2-margin-width;
+        float sideGap=Math.min(metrics.xdpi/2.54f, Math.max(0,halfChannel-24*density));
+        float radius=Math.min(halfChannel-sideGap,
+            Math.min(h/2-headerBottom,footerTop-h/2)-6*density);
         if(radius<=0) return;
         c.save();
         c.translate(w/2,h/2);

@@ -53,10 +53,32 @@ public final class LevelActivity extends Activity implements SensorEventListener
         instrument = new Instrument(this, angles);
         root.addView(instrument, -1, -1);
         FrameLayout.LayoutParams headerParams = new FrameLayout.LayoutParams(-1, -2, Gravity.TOP);
-        headerParams.setMargins(dp(40), dp(38), dp(40), 0);
+
         root.addView(header, headerParams);
         header.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) ->
             instrument.headerBottom(b - root.getPaddingTop()));
+        TextView signature = new TextView(this);
+        signature.setText("Muhammed Yusuf OLGUN");
+        signature.setGravity(Gravity.CENTER);
+        signature.setTextColor(0xffcccccc);
+        signature.setTextSize(14);
+        signature.setSingleLine(true);
+        FrameLayout.LayoutParams footerParams = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM);
+        root.addView(signature, footerParams);
+        instrument.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) -> {
+            int edge = Math.round(instrument.edgeWidth()) + dp(4);
+            int inset = edge + dp(3);
+            headerParams.setMargins(inset, edge + dp(3), inset, 0);
+            header.setLayoutParams(headerParams);
+            float space = Math.max(1, r-l-2*inset);
+            signature.setTextScaleX(1);
+            float textWidth = signature.getPaint().measureText(signature.getText().toString());
+            signature.setTextScaleX(Math.min(1, space/textWidth));
+            footerParams.setMargins(inset, 0, inset, edge + 2*signature.getLineHeight());
+            signature.setLayoutParams(footerParams);
+        });
+        signature.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) ->
+            instrument.footerTop(t - root.getPaddingTop()));
         setContentView(root);
     }
 

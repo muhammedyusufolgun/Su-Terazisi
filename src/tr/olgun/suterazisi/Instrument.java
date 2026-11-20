@@ -18,18 +18,17 @@ final class Instrument extends View {
     private final TextView angles;
     private boolean available;
     private float x,y;
-    private float radius, sideWidth;
+    private float radius, sideWidth, topTubeY;
     private int lastX = Integer.MIN_VALUE, lastY;
     Instrument(Context context, TextView angles) {
         super(context);
         this.angles = angles;
     }
-    float edgeWidth() {
+    private float edgeWidth() {
         float shorter = Math.min(getWidth(), getHeight());
         return 4 * Math.min(28 * getResources().getDisplayMetrics().density, shorter * .075f);
     }
-    float sideWidth() { return sideWidth; }
-    float fitCenter(int labelHeight) {
+    int layoutForLabels(int labelHeight) {
         android.util.DisplayMetrics dm=getResources().getDisplayMetrics();
         float margin=4*dm.density;
         float half=getWidth()/2f-margin;
@@ -38,11 +37,12 @@ final class Instrument extends View {
         float gap=dm.xdpi/5.08f;
         float minSide=Math.min(edgeWidth()*2/3,16*dm.density);
         float maxRadius=Math.min(half-gap-minSide,
-            getHeight()/2f-margin-edgeWidth()*2/3-labelHeight-6*dm.density);
+            getHeight()/2f-dm.ydpi/5.08f-edgeWidth()*2/3-labelHeight);
         radius=Math.max(0,Math.min(3*previousRadius,maxRadius));
         sideWidth=Math.max(minSide,half-gap-radius);
         invalidate();
-        return radius;
+        topTubeY=getHeight()/2f-radius-dm.ydpi/5.08f-edgeWidth()*2/3;
+        return Math.max(1,Math.round(topTubeY));
     }
     void status(String s) {
         available = false;
@@ -115,10 +115,12 @@ final class Instrument extends View {
         if (width <= 0) return;
         android.util.DisplayMetrics metrics=getResources().getDisplayMetrics();
         float gap=Math.min(metrics.ydpi/2.54f, Math.max(0,(h-2*(margin+edgeWidth())-edgeWidth())/2));
-        edge(c,margin,margin,w-2*margin,width,false,x);
-        edge(c,margin,h-margin-width,w-2*margin,width,false,x);
+        edge(c,margin,topTubeY,w-2*margin,width,false,x);
+        edge(c,margin,h-topTubeY-width,w-2*margin,width,false,x);
         float top=margin+edgeWidth()+gap;
-        float sideLength=(h-2*top)*2/3;
+        float insideHalfHeight=h/2-topTubeY-width;
+        float cornerGap=Math.min(gap,insideHalfHeight*.32f);
+        float sideLength=Math.min((h-2*top)*2/3,2*(insideHalfHeight-cornerGap));
         float sideTop=(h-sideLength)/2;
         if(sideWidth>0 && sideLength>0) {
             edge(c,margin+sideWidth,sideTop,sideLength,sideWidth,true,-y);

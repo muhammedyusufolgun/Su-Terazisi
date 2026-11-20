@@ -64,20 +64,19 @@ public final class LevelActivity extends Activity implements SensorEventListener
         FrameLayout.LayoutParams footerParams = new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM);
         root.addView(signature, footerParams);
         instrument.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob) -> {
-            int edge = Math.round(instrument.edgeWidth()*2/3) + dp(4);
-            int labelHeight = title.getMinHeight() + angles.getLineHeight() + dp(8);
-            float radius = instrument.fitCenter(labelHeight);
-            int inset = Math.round(instrument.sideWidth()) + dp(7);
-            int bandHeight = Math.max(1, Math.round((b-t)/2f-radius)-edge);
+            int inset = dp(8);
+            int space = Math.max(1,r-l-2*inset);
+            int widthSpec = View.MeasureSpec.makeMeasureSpec(space,View.MeasureSpec.EXACTLY);
+            header.measure(widthSpec, View.MeasureSpec.UNSPECIFIED);
+            int bandHeight = instrument.layoutForLabels(header.getMeasuredHeight());
             headerParams.height = bandHeight;
-            headerParams.setMargins(inset, edge, inset, 0);
+            headerParams.setMargins(inset, 0, inset, 0);
             header.setLayoutParams(headerParams);
-            float space = Math.max(1, r-l-2*inset);
             signature.setTextScaleX(1);
             float textWidth = signature.getPaint().measureText(signature.getText().toString());
             signature.setTextScaleX(Math.min(1, space/textWidth));
             footerParams.height = bandHeight;
-            footerParams.setMargins(inset, 0, inset, edge);
+            footerParams.setMargins(inset, 0, inset, 0);
             signature.setLayoutParams(footerParams);
         });
         setContentView(root);

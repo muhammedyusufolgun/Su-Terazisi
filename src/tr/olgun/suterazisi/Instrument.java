@@ -9,12 +9,12 @@ import java.util.Locale;
 final class Instrument extends View {
     private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Shader glass = new LinearGradient(0,0,0,64,
-        new int[]{0xff334c00,0xff76a900,0xffd3ed0b,0xff9db700,0xff4f6600},
+        new int[]{0xff007f9b,0xff24bdd8,0xffa2f4ff,0xff52d6ed,0xff098fae},
         new float[]{0,.22f,.67f,.88f,1},Shader.TileMode.CLAMP);
     private final Shader pool = new LinearGradient(0,-100,0,100,
-        new int[]{0xff486f00,0xff85b000,0xffd0e819,0xff829800},null,Shader.TileMode.CLAMP);
+        new int[]{0xff149ab9,0xff48cfe6,0xffa5f2ff,0xff39b5ce},null,Shader.TileMode.CLAMP);
     private final Shader air = new RadialGradient(-.23f,-.42f,1.43f,
-        new int[]{0xffedffa6,0xffcadf3a,0xffa0bd19,0xff517000},new float[]{0,.43f,.72f,1},Shader.TileMode.CLAMP);
+        new int[]{0xfff1feff,0xffd0faff,0xff82e1f2,0xff278da7},new float[]{0,.43f,.72f,1},Shader.TileMode.CLAMP);
     private final TextView angles;
     private boolean available;
     private float x,y;
@@ -27,17 +27,15 @@ final class Instrument extends View {
     int layoutForLabels(int labelHeight) {
         android.util.DisplayMetrics dm=getResources().getDisplayMetrics();
         float halfW=getWidth()/2f, halfH=getHeight()/2f;
-        float gapX=dm.xdpi/5.08f, gapY=dm.ydpi/5.08f;
-        float room=Math.min(halfW-4*dm.density-gapX,halfH-labelHeight-gapY);
-        tubeWidth=Math.max(0,Math.min(room*.45f,
-            Math.min(28*dm.density, Math.min(getWidth(),getHeight())*.075f)*8/3));
-        radius=Math.max(0,room-tubeWidth);
-        leftInner=halfW-radius-gapX;
-        topInner=halfH-radius-gapY;
-        // Equal setbacks on both axes separate the four adjacent tube ends.
-        float clearance=Math.min(dm.xdpi,dm.ydpi)/(2.54f*(float)Math.sqrt(2));
-        float innerHalf=Math.min(radius+gapX,radius+gapY);
-        tubeLength=2*(innerHalf-Math.min(clearance,innerHalf*.32f));
+        float room=Math.max(0,halfH-labelHeight);
+        float sideGap=dm.xdpi/5.08f;
+        float cornerGap=Math.min(dm.ydpi/5.08f,room*.08f);
+        tubeWidth=Math.min(Math.min(halfW*.40f,room*.22f),28*dm.density*8/3);
+        // Reserve space above and below the vertical tubes for both horizontal tubes.
+        tubeLength=Math.max(0,Math.min(getWidth(),2*(room-tubeWidth-cornerGap)));
+        leftInner=tubeWidth;
+        topInner=halfH-tubeLength/2-cornerGap;
+        radius=Math.max(0,Math.min(halfW-tubeWidth-sideGap,tubeLength/2));
         invalidate();
         return Math.max(1,Math.round(topInner-tubeWidth));
     }
@@ -67,7 +65,7 @@ final class Instrument extends View {
         c.save();
         c.translate(cx,cy);
         c.scale(rx,ry);
-        fill(0xff516a09);
+        fill(0xff236f88);
         c.drawCircle(0,0,1,p);
         fill(-1);
         p.setShader(air);
@@ -81,7 +79,7 @@ final class Instrument extends View {
         p.setShader(glass);
         c.drawRoundRect(4,4,length-4,60,4,4,p);
         if(available) bubble(c,length/2+travel(value)*(length/2-32),32,23,18);
-        fill(0xcc2b3907);
+        fill(0xcc144355);
         p.setStrokeWidth(1.5f);
         for(int sign:new int[]{-1,1}) {
             float marker=length/2+sign*29;
@@ -130,7 +128,7 @@ final class Instrument extends View {
             float factor=magnitude==0 ? 0 : (float)(distance/magnitude);
             bubble(c,x*factor,-y*factor,18,18);
         }
-        fill(0xcc293902);
+        fill(0xcc144355);
         p.setStrokeWidth(1.3f);
         c.drawLine(-99,0,99,0,p);
         c.drawLine(0,-99,0,99,p);
